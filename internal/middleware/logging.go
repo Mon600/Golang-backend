@@ -1,6 +1,6 @@
 package middleware
 
-import(
+import (
 	"log"
 	"net/http"
 	"time"
@@ -11,13 +11,12 @@ type responseLogger struct {
 	statusCode int
 }
 
-
 func (rl *responseLogger) WriteHeader(statusCode int) {
 	rl.statusCode = statusCode
 	rl.ResponseWriter.WriteHeader(statusCode)
 }
 
-func Logging(next http.Handler) http.Handler{
+func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		lw := &responseLogger{ResponseWriter: w, statusCode: http.StatusOK}
