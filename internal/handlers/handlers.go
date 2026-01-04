@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"net/http"
 	"encoding/json"
 	"log"
+	"net/http"
 )
 
 func validate(data map[string]interface{}, key string) (string, bool) {
@@ -16,7 +16,6 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
-
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

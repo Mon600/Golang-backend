@@ -2,29 +2,31 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
+	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
 	"strconv"
 
 	"Golang-backend/internal/model"
-	"Golang-backend/internal/repository"
+	"Golang-backend/internal/services"
 )
 
 type UserHandler struct {
-	userRepo *repository.UserRepository
+	UserServ *services.UserService
 }
 
-func NewUserHandler(userRepo *repository.UserRepository) *UserHandler {
-	return &UserHandler{userRepo: userRepo}
+func NewUserHandler(UserServ *services.UserService) *UserHandler {
+	return &UserHandler{UserServ: UserServ}
 }
 
-func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) CreateUser(r *http.Request, w http.ResponseWriter) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	var req struct {
-		Name string `json:"name"`
+		Name  string `json:"name"`
 		Email string `json:"email"`
 	}
 
@@ -43,55 +45,76 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	user := model.User{Name: req.Name, Email: req.Email}
-	id, err := h.userRepo.Create(user)
+	id, err := h.UserServ.CreateUser(user)
 	if err != nil {
-		if err.Error() == "pq: duplicate key value violates unique constraint \"user_email_key\"" {
-			http.Error(w, "Email already exists", http.StatusConflict)
-			return
-		}
-		log.Fatalf("%v", err)
-		http.Error(w, "Intetnal error", http.StatusInternalServerError)
-		return
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id": id,
+		"id":   id,
 		"name": req.Name,
 	})
 }
 
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Path[len("/user/"):]
+	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
-		http.Error(w, "Missing user ID", http.StatusBadRequest)
+		http.Error(w, "missing user ID", http.StatusBadRequest)
 		return
 	}
 
-	id, err := strconv.Atoi(idStr)
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		http.Error(w, "invalid user ID", http.StatusBadRequest)
 		return
 	}
-
-	user, err := h.userRepo.GetByID(id)
+	user, err := h.UserServ.GetUser(id)
 	if err != nil {
+		if errors.Is(err, services.ErrUserNotFound) {
+			http.Error(w, "User not found", http.StatusNotFound)
+			return
+		}
 		log.Printf("Failed to get user: %v", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
-
-	if user == nil {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
 }
 
+func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	var req model.UserUpdate
 
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
 
+	if req.Name == "" && req.Email == "" {
+		http.Error(w, "Nothing to change, fields is empty", http.StatusUnprocessableEntity)
+		return
+	}
+
+	defer r.Body.Close()
+
+	new_data, err := h.UserServ.UpdateUser(id, req)
+	if err != nil {
+		http.Error(w, string(err.Error()), http.StatusInternalServerError)
+		return
+	}
+	if new_data == nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(new_data)
+}

@@ -3,9 +3,9 @@ package data
 import (
 	"context"
 	"database/sql"
+	_ "github.com/lib/pq"
 	"log"
 	"time"
-	_"github.com/lib/pq"
 )
 
 func NewDB(dataSourceName string) *sql.DB { //пример dataSourceName: postgres://user:password@localhost:5432/mydb?sslmode=disable
@@ -26,4 +26,4 @@ func NewDB(dataSourceName string) *sql.DB { //пример dataSourceName: postg
 
 	log.Println("Connected to PostgreSQL")
 	return db
-}	
+}

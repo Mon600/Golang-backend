@@ -9,7 +9,6 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-
 func RunMigrations(db *sql.DB, MigrationPath string) {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
