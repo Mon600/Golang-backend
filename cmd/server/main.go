@@ -41,10 +41,10 @@ func main() {
 	r.Get("/user/{id}", func(w http.ResponseWriter, r *http.Request) {
 		userHandler.GetUser(w, r)
 	})
-	r.Get("/main", func(w http.ResponseWriter, r *http.Request) {
-		handlers.MainHandler(w, r)
-	})
 
+	r.Delete("/user/{id}", func(w http.ResponseWriter, r *http.Request) {
+		userHandler.DeleteUser(w, r)
+	})
 	srv := &http.Server{
 		Addr:    ":8000",
 		Handler: r,

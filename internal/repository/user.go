@@ -67,3 +67,21 @@ func (r *UserRepository) UpdateByID(id int64, data model.User) (*model.User, err
 	}
 	return &user, nil
 }
+
+func (r *UserRepository) DeleteByID(id int64) (*string, error) {
+	const query = `
+	DELETE FROM users
+	WHERE users.id = $1
+	RETURNING email`
+
+	row := r.db.QueryRow(query, id)
+	var email string
+	err := row.Scan(&email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("Failed to delet user with id %d, error: %w", id, err)
+	}
+	return &email, nil
+}

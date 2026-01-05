@@ -21,10 +21,10 @@ func NewUserHandler(UserServ *services.UserService) *UserHandler {
 }
 
 func (h *UserHandler) CreateUser(r *http.Request, w http.ResponseWriter) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+	// if r.Method != http.MethodPost {
+	// 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	// 	return
+	// }
 	var req struct {
 		Name  string `json:"name"`
 		Email string `json:"email"`
@@ -86,10 +86,10 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+	// if r.Method != http.MethodPut {
+	// 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	// 	return
+	// }
 	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	var req model.UserUpdate
 
@@ -117,4 +117,21 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(new_data)
+}
+
+func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	deleted_email, err := h.UserServ.DeleteUser(id)
+	if err != nil {
+		log.Fatal("error: %w", err)
+		http.Error(w, "Failed to delete user", http.StatusInternalServerError)
+		return
+	}
+	if deleted_email == nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(deleted_email)
 }

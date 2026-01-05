@@ -56,3 +56,14 @@ func (s *UserService) UpdateUser(id int64, data model.UserUpdate) (*model.User, 
 	}
 	return new_data, nil
 }
+
+func (s *UserService) DeleteUser(id int64) (*string, error) {
+	deleted_email, err := s.userRepo.DeleteByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to delete user in DB: %w", err)
+	}
+	if deleted_email == nil {
+		return nil, nil
+	}
+	return deleted_email, nil
+}
