@@ -21,10 +21,6 @@ func NewUserHandler(UserServ *services.UserService) *UserHandler {
 }
 
 func (h *UserHandler) CreateUser(r *http.Request, w http.ResponseWriter) {
-	// if r.Method != http.MethodPost {
-	// 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	// 	return
-	// }
 	var req struct {
 		Name  string `json:"name"`
 		Email string `json:"email"`
@@ -86,10 +82,6 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	// if r.Method != http.MethodPut {
-	// 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	// 	return
-	// }
 	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	var req model.UserUpdate
 
